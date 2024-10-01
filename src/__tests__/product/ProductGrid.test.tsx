@@ -3,66 +3,68 @@ import { render, waitFor, screen } from '@testing-library/react';
 import { ProductGrid } from '@/components/product/ProductGrid';
 import productService from '@/lib/services/productService';
 
-// Define the type of productService.getAll as a jest mock function
-jest.mock('@/lib/services/productService', () => ({
-    getAll: jest.fn(() => ({
-        request: Promise.resolve({ data: [] }),
-        cancel: jest.fn(),
-    })),
-}));
+jest.mock('@/lib/services/productService');
 
-describe('ProductGrid', () => {
-    afterEach(() => {
-        jest.clearAllMocks();
+const mockProducts = [
+    {
+        id: 1,
+        productGroup: 'Mobile phones',
+        brand: 'Samsung',
+        code: 'TES1010SAMS S901',
+        name: 'Samsung Galaxy S22',
+        shortDescription:
+            'A feature-packed Galaxy smartphone with a sleek design and a high-quality camera.',
+        orderCount: 46,
+        productVariants: [
+            {
+                color: 'Black',
+                imgUrl: '/images/samsung-galaxy-s22-black.png',
+                monthlyPrice: 19.13,
+                defaultVariant: false,
+                stock: [
+                    {
+                        qtyInStock: 10,
+                    },
+                ],
+            },
+        ],
+    },
+];
+
+describe('<ProductGrid />', () => {
+    it('renders without crashing', () => {
+        productService.getObject = jest.fn().mockReturnValue({
+            request: Promise.resolve({ data: { content: [] } }),
+            cancel: jest.fn(),
+        });
+        render(<ProductGrid />);
+        expect(screen.getByTestId('product-grid')).toBeInTheDocument();
     });
 
-    it('renders loader and then product cards when the database call is successful', async () => {
-        const products = [
-            {
-                id: 1,
-                name: 'Product 1',
-                price: 10,
-                productVariants: [
-                    {
-                        color: 'green',
-                    },
-                ],
-            },
-            {
-                id: 2,
-                name: 'Product 2',
-                price: 20,
-                productVariants: [
-                    {
-                        color: 'red',
-                    },
-                ],
-            },
-        ];
-
-        // Mock the successful response
-        (productService.getAll as jest.Mock).mockReturnValueOnce({
-            request: Promise.resolve({ data: products }),
+    it('displays products when loaded successfully', async () => {
+        productService.getObject = jest.fn().mockReturnValue({
+            request: Promise.resolve({ data: { content: mockProducts } }),
             cancel: jest.fn(),
         });
 
         render(<ProductGrid />);
 
-        // Check if the loader is rendered
-        expect(screen.getByText('Loading...')).toBeInTheDocument();
-
-        // Wait for the products to be rendered
         await waitFor(() => {
-            expect(screen.getByText('Product 1')).toBeInTheDocument();
+            expect(screen.getByText('Samsung Galaxy S22')).toBeInTheDocument();
         });
-
-        await waitFor(() => {
-            expect(screen.getByText('Product 2')).toBeInTheDocument();
-        });
-
-        // Check if the loader is no longer rendered
-        expect(screen.queryByText('Loading...')).not.toBeInTheDocument();
     });
 
-    // Rest of your test code...
+    it('displays error message when loading fails', async () => {
+        const errorMessage = 'Failed to fetch products';
+        productService.getObject = jest.fn().mockReturnValue({
+            request: Promise.reject(new Error(errorMessage)),
+            cancel: jest.fn(),
+        });
+
+        render(<ProductGrid />);
+
+        await waitFor(() => {
+            expect(screen.getByText(errorMessage)).toBeInTheDocument();
+        });
+    });
 });
