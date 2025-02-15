@@ -43,6 +43,12 @@ declare interface StockOption {
     qtyInStock: number;
     }    
 
+interface PriceRange {
+    min: number;
+    max: number;
+    } 
+
+
 declare interface FilterOptions {
     productGroups: string[];
     brands: string[];

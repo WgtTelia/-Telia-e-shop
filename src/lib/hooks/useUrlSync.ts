@@ -8,6 +8,7 @@ const FILTER_KEYS = [
     'colors',
     'stockOptions',
 ] as const;
+
 type FilterKey = (typeof FILTER_KEYS)[number];
 
 export const useUrlSync = () => {
@@ -19,12 +20,15 @@ export const useUrlSync = () => {
         (filters: Partial<Filter>) => {
             const params = new URLSearchParams(searchParams.toString());
 
-            FILTER_KEYS.forEach((key) => {
-                const value = filters[key];
+            Object.entries(filters).forEach(([key, value]) => {
+                // We have to transform 'productGroups' to 'productGroup' to resolve the backend endpoint naming inconsistency
+                const backendKey =
+                    key === 'productGroups' ? 'productGroup' : key;
+
                 if (Array.isArray(value) && value.length > 0) {
-                    params.set(key, value.join(','));
+                    params.set(backendKey, value.join(','));
                 } else {
-                    params.delete(key);
+                    params.delete(backendKey);
                 }
             });
 
@@ -39,7 +43,10 @@ export const useUrlSync = () => {
         const filters: Partial<Pick<Filter, FilterKey>> = {};
 
         FILTER_KEYS.forEach((key) => {
-            const value = searchParams.get(key);
+            // Transform 'productGroups' to 'productGroup' when reading from URL
+            const backendKey = key === 'productGroups' ? 'productGroup' : key;
+            const value = searchParams.get(backendKey);
+
             if (value) {
                 filters[key] = value.split(',');
             }

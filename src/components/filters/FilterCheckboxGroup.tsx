@@ -10,9 +10,8 @@ export interface FilterCheckboxGroupProps<T extends FieldValues> {
     filterSections: {
         name: keyof Filter;
         title: string;
-        options: string[];
+        options: Array<string | { value: string; label: string }>;
     }[];
-    handleFilterChange?: (category: keyof Filter, selected: string[]) => void;
 }
 export const FilterCheckboxGroup = <T extends FieldValues>({
     form,
